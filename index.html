@@ -138,6 +138,76 @@
             font-size: 0.85rem;
             margin-top: 3rem;
         }
+
+        /* --- scattered layout (preview) --- */
+        main.scattered {
+            max-width: none;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .board {
+            position: relative;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .scattered article {
+            position: absolute;
+            width: 340px;
+            margin: 0;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transition: left 0.6s cubic-bezier(.2, .8, .2, 1), top 0.6s cubic-bezier(.2, .8, .2, 1),
+                transform 0.6s cubic-bezier(.2, .8, .2, 1), box-shadow 0.2s;
+        }
+
+        .scattered article:hover {
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+        }
+
+        .scattered article.dragging {
+            cursor: grabbing;
+            transition: box-shadow 0.2s;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+        }
+
+        .scattered article img {
+            pointer-events: none;
+        }
+
+        button.shuffle {
+            margin-top: 0.75rem;
+            font: inherit;
+            font-size: 0.85rem;
+            color: var(--accent);
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.2rem 0.9rem;
+            cursor: pointer;
+        }
+
+        /* Phones: a loosely tilted stack instead of free placement. */
+        @media (max-width: 760px) {
+            .board {
+                height: auto !important;
+            }
+
+            .scattered article {
+                position: relative;
+                width: auto;
+                left: auto !important;
+                top: auto !important;
+                margin-bottom: 1.5rem;
+            }
+
+            button.shuffle {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -149,9 +219,11 @@
         </header>
 
         <article>
+            <img src="img/fellow-aiden-profiler.png" alt="Aiden Profiler: Every great cup starts with a profile, next to a brew profile card with Send to your Aiden" loading="lazy">
             <h2>Fellow Aiden Profiler</h2>
             <div class="links">
-                <span class="note">private repository</span>
+                <a href="https://fellowaidenprofiler.com">fellowaidenprofiler.com</a>
+                <span class="note">· private repository</span>
             </div>
             <p>
                 Find, create and import brew profiles for the Fellow Aiden, and share them in a communal catalog.
@@ -238,6 +310,166 @@
 
         <footer>© Steffen Immerkær</footer>
     </main>
+
+    <script>
+        // Scatters the cards at random positions and tilts, trying many spots per card and
+        // keeping the one that overlaps the already placed cards the least. Cards can be dragged.
+        (function () {
+            const main = document.querySelector("main");
+            const cards = [...main.querySelectorAll("article")];
+            const board = document.createElement("div");
+            board.className = "board";
+            cards[0].before(board);
+            board.append(...cards);
+            main.classList.add("scattered");
+
+            const button = document.createElement("button");
+            button.className = "shuffle";
+            button.textContent = "shuffle";
+            let shuffled = false;
+            button.onclick = () => { shuffled = true; scatter(); };
+            document.querySelector("header").append(button);
+
+            // Start layout: each card's center, as px from the board's horizontal middle (dx) and from
+            // its top (cy), plus a tilt in degrees.
+            const startLayout = {
+                "wod-gpt": { dx: -521, cy: 377, angle: -4.6 },
+                "Fellow Aiden Profiler": { dx: -7, cy: 316, angle: 2.5 },
+                "typer": { dx: 493, cy: 336, angle: 2 },
+                "fellow-aiden-ts": { dx: -253, cy: 900, angle: 4.4 },
+                "fellow-aiden-dotnet": { dx: 302, cy: 848, angle: 0.8 },
+            };
+
+            const isPhone = () => matchMedia("(max-width: 760px)").matches;
+            // Seeded until the first shuffle, so a window too narrow for the start layout still gets the same one every load.
+            let rng = Math.random;
+            const random = (min, max) => min + rng() * (max - min);
+
+            function seeded(seed) {
+                return () => {
+                    seed = seed + 0x6D2B79F5 | 0;
+                    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+                    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+            }
+
+            function overlap(a, b) {
+                const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+                const h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+                return w > 0 && h > 0 ? w * h : 0;
+            }
+
+            function scatter() {
+                rng = shuffled ? Math.random : seeded(7);
+                if (isPhone()) {
+                    cards.forEach((card, i) => card.style.transform = `rotate(${random(-2, 2)}deg) translateX(${(i % 2 ? 1 : -1) * random(0, 10)}px)`);
+                    return;
+                }
+
+                const width = board.clientWidth;
+                const sizes = cards.map(card => ({ w: card.offsetWidth, h: card.offsetHeight }));
+                const totalArea = sizes.reduce((sum, s) => sum + s.w * s.h, 0);
+                let height = Math.max(Math.max(...sizes.map(s => s.h)) + 60, totalArea / width * 1.6);
+
+                // The fixed start layout, unless shuffled or the window is too narrow for it to fit cleanly.
+                // Otherwise retry on a taller board until every card finds a spot touching no other card.
+                let placed = shuffled ? null : startPlace(sizes, width);
+                for (let tries = 0; tries < 40 && !placed; tries++, height *= 1.15) placed = tryPlace(sizes, width, height);
+                if (!placed) return;
+
+                placed.forEach((p, n) => {
+                    const card = cards[p.index];
+                    card.style.left = p.left + "px";
+                    card.style.top = p.top + "px";
+                    card.style.transform = `rotate(${p.angle}deg)`;
+                    card.style.zIndex = n + 1;
+                });
+                board.style.height = Math.max(...placed.map(p => p.y + p.h)) + 40 + "px";
+            }
+
+            const gap = 16;
+
+            /**
+             * A card at left/top tilted by angle. A tilted card covers more than its box, so x/y/w/h is the
+             * rotated bounding box plus a gap. CSS rotates around the center, so both share a center.
+             */
+            function footprint(index, w, h, angle, left, top) {
+                const rad = Math.abs(angle) * Math.PI / 180;
+                const bw = w * Math.cos(rad) + h * Math.sin(rad) + gap;
+                const bh = w * Math.sin(rad) + h * Math.cos(rad) + gap;
+                return { index, angle, left, top, x: left - (bw - w) / 2, y: top - (bh - h) / 2, w: bw, h: bh };
+            }
+
+            function startPlace(sizes, width) {
+                const spots = cards.map(card => startLayout[card.querySelector("h2").textContent.trim()]);
+                if (spots.some(spot => !spot)) return null;
+
+                // On a narrower board, pull the cards toward the middle just enough for the outermost one to fit.
+                const squeeze = Math.min(1, ...spots.map((spot, i) => {
+                    const half = footprint(i, sizes[i].w, sizes[i].h, spot.angle, 0, 0).w / 2;
+                    return spot.dx === 0 ? 1 : (width / 2 - half) / Math.abs(spot.dx);
+                }));
+
+                const placed = spots.map((spot, index) => {
+                    const { w, h } = sizes[index];
+                    return footprint(index, w, h, spot.angle, width / 2 + spot.dx * squeeze - w / 2, spot.cy - h / 2);
+                });
+                const fits = placed.every((p, i) =>
+                    p && p.x >= 0 && p.y >= 0 && p.x + p.w <= width && placed.slice(0, i).every(q => overlap(p, q) === 0));
+                return fits ? placed : null;
+            }
+
+            function tryPlace(sizes, width, height) {
+                const placed = [];
+                const order = sizes.map((s, i) => i).sort(() => rng() - 0.5);
+                for (const index of order) {
+                    const { w, h } = sizes[index];
+                    const shape = footprint(index, w, h, random(-7, 7), 0, 0);
+                    if (shape.w > width) return null;
+
+                    let spot = null;
+                    for (let attempt = 0; attempt < 500 && !spot; attempt++) {
+                        const x = random(0, width - shape.w);
+                        const y = random(0, Math.max(0, height - shape.h));
+                        const candidate = { ...shape, x, y, left: x + (shape.w - w) / 2, top: y + (shape.h - h) / 2 };
+                        if (placed.every(p => overlap(candidate, p) === 0)) spot = candidate;
+                    }
+                    if (!spot) return null;
+                    placed.push(spot);
+                }
+                return placed;
+            }
+
+            let top = cards.length;
+            for (const card of cards) {
+                card.addEventListener("pointerdown", event => {
+                    if (isPhone() || event.target.closest("a")) return;
+                    card.setPointerCapture(event.pointerId);
+                    card.classList.add("dragging");
+                    card.style.zIndex = ++top;
+                    const startX = event.clientX - card.offsetLeft;
+                    const startY = event.clientY - card.offsetTop;
+                    const move = e => {
+                        card.style.left = e.clientX - startX + "px";
+                        card.style.top = e.clientY - startY + "px";
+                    };
+                    const up = () => {
+                        card.classList.remove("dragging");
+                        card.removeEventListener("pointermove", move);
+                        card.removeEventListener("pointerup", up);
+                    };
+                    card.addEventListener("pointermove", move);
+                    card.addEventListener("pointerup", up);
+                });
+            }
+
+            // Card heights depend on the images, so wait for them before placing.
+            addEventListener("load", scatter);
+            let resizeTimer;
+            addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(scatter, 200); });
+        })();
+    </script>
 </body>
 
 </html>
