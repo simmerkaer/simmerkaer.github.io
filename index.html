@@ -1,70 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Steffen Immerkær · projects</title>
+    <meta name="description" content="Side projects by Steffen Immerkær.">
     <style>
+        :root {
+            --bg: #fbfaf7;
+            --card: #ffffff;
+            --text: #1f2023;
+            --muted: #6b6d72;
+            --border: #e4e2dc;
+            --accent: #b8860b;
+            --tag-bg: #f1efe9;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #2b2d30;
+                --card: #323437;
+                --text: #d1d0c5;
+                --muted: #8c8e92;
+                --border: #45474b;
+                --accent: #e2b714;
+                --tag-bg: #3b3d41;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Courier New, Courier, monospace
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 16px/1.6 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "Courier New", monospace;
         }
-        h1,
-        h2 {
+
+        main {
+            max-width: 44rem;
+            margin: 0 auto;
+            padding: 4rem 1rem 3rem;
+        }
+
+        header {
             text-align: center;
+            margin-bottom: 3rem;
         }
-        p {
-            text-align: justify;
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.02em;
         }
-        section {
-            margin: auto;
-            max-width: 30em;
-            padding-left: 5em;
-            padding-right: 5em;
+
+        header p {
+            margin: 0.25rem 0 0;
+            color: var(--muted);
         }
-        sub {
-            font-style: italic;
-            color: #777;
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
         }
-        span {
-            font-weight: bold;
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        article img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 1.25rem;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .links {
+            margin: 0.15rem 0 0.75rem;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .links a + a::before {
+            content: "·";
+            color: var(--muted);
+            margin: 0 0.5rem;
+        }
+
+        article p {
+            margin: 0 0 1rem;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .tags li {
+            background: var(--tag-bg);
+            color: var(--muted);
+            font-size: 0.8rem;
+            padding: 0.1rem 0.55rem;
+            border-radius: 999px;
+        }
+
+        .note {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-top: 3rem;
         }
     </style>
 </head>
 
 <body>
-    <section>
-        <h1>
-            steffen immerkær
-            <br />
-            <sub>projects</sub>
-        </h1>
-        <h2>altum</h2>
-        <sub>
-            <a href="https://www.altum.dk/">www.altum.dk</a>
-        </sub>
-        <p>
-            Homepage for Altum IVS. Created using <span>React (Create React App)</span>.
-        </p>
-        <h2>buddy.gg</h2>
-        <sub>
-            <a href="https://buddy.gg">www.buddy.gg</a>
-        </sub>
-        <p>
-            Site for finding and matching with other people in League of Legends. 
-            Frontend build using <span>React (Create React App)</span>, 
-            <span>React Router</span> and <span>Semantic Ui React</span>.          
-        </p>
-        <p>
-            Backend build using Elixir and Phoenix (not by me).
-        </p>
-        <h2>cryptoflowers</h2>
-        <sub>
-            <a href="https://crypto-flowers.org">www.crypto-flowers.org</a>
-        </sub>
-        <p>
-            Site build to visualize top 100 crypto currencies as flowers. Flower size based on market cap
-            and number of petals based on last 24 hour volume. Build using <span>React (Create React App)</span>, 
-            <span>d3.js</span> and <span>Google Firebase</span> for hosting purposes.     
-        </p>
-    </section>
+    <main>
+        <header>
+            <h1>steffen immerkær</h1>
+            <p>projects · <a href="https://github.com/simmerkaer">github.com/simmerkaer</a></p>
+        </header>
+
+        <article>
+            <img src="img/typer.png" alt="typer mid-test: typed words, a typo in red, the caret, and upcoming words in grey" loading="lazy">
+            <h2>typer</h2>
+            <div class="links">
+                <a href="https://github.com/simmerkaer/typer">github</a>
+            </div>
+            <p>
+                A fast, monkeytype-style typing test for the terminal. Time and words modes, English and Danish
+                word lists, and a stats screen that charts your wpm over time. Installs as a global .NET tool.
+            </p>
+            <ul class="tags">
+                <li>C#</li>
+                <li>.NET 10</li>
+                <li>terminal</li>
+            </ul>
+        </article>
+
+        <article>
+            <img src="img/wod-gpt.png" alt="wod-gpt: buttons for random or specific movements and Generate WOD" loading="lazy">
+            <h2>wod-gpt</h2>
+            <div class="links">
+                <a href="https://github.com/simmerkaer/wod-gpt">github</a>
+            </div>
+            <p>
+                An AI-powered CrossFit workout generator that creates custom workouts based on your preferences.
+            </p>
+            <ul class="tags">
+                <li>React</li>
+                <li>TypeScript</li>
+                <li>Tailwind</li>
+                <li>Azure Functions</li>
+                <li>OpenAI</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>fellow-aiden-ts</h2>
+            <div class="links">
+                <a href="https://simmerkaer.github.io/fellow-aiden-ts/">live demo</a>
+                <a href="https://www.npmjs.com/package/fellow-aiden">npm</a>
+                <a href="https://github.com/simmerkaer/fellow-aiden-ts">github</a>
+            </div>
+            <p>
+                A TypeScript/JavaScript client for the Fellow Aiden coffee brewer's cloud API, published to npm,
+                with a browser demo running through a Cloudflare Worker proxy.
+            </p>
+            <ul class="tags">
+                <li>TypeScript</li>
+                <li>npm</li>
+                <li>Vite</li>
+                <li>Cloudflare Workers</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>fellow-aiden-dotnet</h2>
+            <div class="links">
+                <a href="https://www.nuget.org/packages/FellowAiden">nuget</a>
+                <a href="https://github.com/simmerkaer/fellow-aiden-dotnet">github</a>
+            </div>
+            <p>
+                The same Fellow Aiden client for .NET, published to NuGet as <code>FellowAiden</code>.
+            </p>
+            <ul class="tags">
+                <li>C#</li>
+                <li>.NET</li>
+                <li>NuGet</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Fellow Aiden Profiler</h2>
+            <div class="links">
+                <span class="note">private repository</span>
+            </div>
+            <p>
+                Find, create and import brew profiles for the Fellow Aiden, and share them in a communal catalog.
+                A Blazor frontend and a backend built on the <code>FellowAiden</code> .NET client, orchestrated
+                with .NET Aspire and deployed to Azure.
+            </p>
+            <ul class="tags">
+                <li>C#</li>
+                <li>Blazor</li>
+                <li>.NET Aspire</li>
+                <li>Azure</li>
+            </ul>
+        </article>
+
+        <footer>© Steffen Immerkær</footer>
+    </main>
 </body>
 
 </html>
